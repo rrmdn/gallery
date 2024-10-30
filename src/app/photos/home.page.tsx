@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchPhotos } from "./hooks/pexels";
 import MasonryGrid from "../../shared/components/MasonryGrid";
 import { useInView } from "react-intersection-observer";
