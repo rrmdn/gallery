@@ -1,5 +1,6 @@
 import { PhotosWithTotalResults, createClient } from "pexels";
 import { useCallback, useMemo, useState } from "react";
+import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 
 export const useSearchPhotos = () => {
@@ -72,4 +73,32 @@ export const useSearchPhotos = () => {
     results,
     loadMore,
   };
+};
+
+export const usePhoto = (id: number) => {
+  const client = useMemo(() => {
+    return createClient(import.meta.env.VITE_PEXELS_API_KEY);
+  }, []);
+  const photo = useSWR(
+    [id],
+    async ([id]) => {
+      return client.photos
+        .show({ id })
+        .then((res) => {
+          if ("error" in res) {
+            throw new Error(res.error);
+          }
+          return res;
+        })
+        .catch(async (error) => {
+          // must be 429, retry at least 5 seconds later
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          throw error;
+        });
+    },
+    {
+      revalidateOnFocus: false,
+    }
+  );
+  return photo;
 };
