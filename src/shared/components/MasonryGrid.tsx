@@ -71,10 +71,12 @@ export default function MasonryGrid<TItem extends object = object>(
       const containerWidth = container.getBoundingClientRect().width;
       let currentColumn = props.columns;
       for (const minWidth in columnsByMinWidth) {
+        const column = columnsByMinWidth[minWidth];
         if (containerWidth > parseInt(minWidth)) {
-          currentColumn = columnsByMinWidth[minWidth];
+          currentColumn = column;
         }
       }
+      currentColumn = Math.min(currentColumn, props.columns);
         
       const columnWidth = Math.floor(
         container.getBoundingClientRect().width / currentColumn - currentColumn

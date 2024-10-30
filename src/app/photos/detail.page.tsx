@@ -68,7 +68,7 @@ function PhotoDetailPage() {
             margin: 16,
           }}
         >
-          <h1
+          <p
             style={{
               color: "rgba(255, 255, 255, 0.8)",
               backdropFilter: "blur(8px)",
@@ -77,8 +77,8 @@ function PhotoDetailPage() {
               backgroundColor: "rgba(0, 0, 0, 0.2)",
             }}
           >
-            {photo.data.photographer}
-          </h1>
+            <strong>{photo.data.photographer}</strong>: {photo.data.alt}
+          </p>
         </div>
         <div>
           <img

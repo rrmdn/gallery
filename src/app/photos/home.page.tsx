@@ -100,11 +100,23 @@ const LazyPhotoRenderer = memo(({ photo }: { photo: Photo }) => {
 
 function PhotosHomePage() {
   const { onSearch, results, loadMore } = useSearchPhotos();
+  const [query, setQuery] = useState("");
   const handleSearch = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onSearch(event.target.value);
+      setQuery(event.target.value);
     },
     [onSearch]
+  );
+  useEffect(
+    function searchPhotos() {
+      const timeout = setTimeout(() => {
+        onSearch(query);
+      }, 500);
+      return () => {
+        clearTimeout(timeout);
+      };
+    },
+    [query, onSearch]
   );
   const photos = useMemo(() => {
     return results?.data?.flatMap((page) => page.photos) ?? [];
@@ -142,7 +154,23 @@ function PhotosHomePage() {
             return <LazyPhotoRenderer photo={photo} />;
           }}
         </MasonryGrid>
-        <div ref={loaderObserver.ref}>Loading..</div>
+        <div ref={loaderObserver.ref}>
+          <h1
+            style={{
+              display: "block",
+              width: "100%",
+              height: 200,
+              textAlign: "center",
+              padding: "8px",
+            }}
+          >
+            {results?.isLoading
+              ? "Loading..."
+              : results?.isValidating
+                ? "Loading more..."
+                : ""}
+          </h1>
+        </div>
       </div>
       <div
         style={{
