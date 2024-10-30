@@ -36,6 +36,14 @@ function MasonryGridItem<TItem extends object>({
   );
 }
 
+const columnsByMinWidth: Record<number, number> = {
+  0: 1,
+  320: 2,
+  480: 3,
+  768: 4,
+  1024: 5,
+};
+
 /**
  * Calculate the relative height of each item by calculating the ratio of the column width to the height of the item
  * @param props the props of the masonry grid
@@ -48,6 +56,7 @@ export default function MasonryGrid<TItem extends object = object>(
   const [state, setState] = useState({
     columnWidth: 0,
     autoRows: 4,
+    currentColumns: props.columns,
   });
   const didMountRef = useRef(false);
   useEffect(() => {
@@ -59,12 +68,21 @@ export default function MasonryGrid<TItem extends object = object>(
     if (!container) return;
     function handleResize() {
       if (!container) return;
+      const containerWidth = container.getBoundingClientRect().width;
+      let currentColumn = props.columns;
+      for (const minWidth in columnsByMinWidth) {
+        if (containerWidth > parseInt(minWidth)) {
+          currentColumn = columnsByMinWidth[minWidth];
+        }
+      }
+        
       const columnWidth = Math.floor(
-        container.getBoundingClientRect().width / props.columns - props.columns
+        container.getBoundingClientRect().width / currentColumn - currentColumn
       );
       setState((state) => ({
         ...state,
         columnWidth,
+        currentColumn
       }));
     }
     handleResize();

@@ -1,9 +1,105 @@
-import { useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchPhotos } from "./hooks/pexels";
 import MasonryGrid from "../../shared/components/MasonryGrid";
+import { useInView } from "react-intersection-observer";
+import { Photos } from "pexels";
+import { Link } from "react-router-dom";
+
+type Photo = Photos["photos"][number];
+
+const LazyPhotoRenderer = memo(({ photo }: { photo: Photo }) => {
+  const placeholderImg = useMemo(() => {
+    return (
+      photo.src.original +
+      `?auto=compress\u0026cs=tinysrgb\u0026dpr=2\u0026w=${5}`
+    );
+  }, [photo.src.original]);
+  const [state, setState] = useState({
+    src: "",
+  });
+  const isPreloading = !state.src || state.src === placeholderImg;
+  const photoVisibility = useInView({
+    threshold: 0,
+    onChange: (inView) => {
+      if (inView) {
+        // load the image gradually
+        const placeholder = new Image();
+        placeholder.src = placeholderImg;
+        setState((state) => ({
+          ...state,
+          src: placeholderImg,
+        }));
+        placeholder.addEventListener("load", () => {
+          const img = new Image();
+          img.src = photo.src.medium;
+          img.addEventListener("load", () => {
+            setState((state) => ({
+              ...state,
+              src: photo.src.medium,
+            }));
+          });
+        });
+      }
+    },
+  });
+  return (
+    <div
+      style={{
+        padding: "8px",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        position: "relative",
+      }}
+      ref={photoVisibility.ref}
+    >
+      {photoVisibility.inView && (
+        <Link to={`/photos/${photo.id}`}>
+          <span
+            style={{
+              position: "absolute",
+              color: "white",
+              backgroundColor: "rgba(0, 0, 0, 0.2)",
+              padding: "2px 6px",
+              borderRadius: 6,
+              margin: 4,
+              maxWidth: "90%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            {photo.photographer}
+          </span>
+          <div
+            style={{
+              borderRadius: 8,
+              overflow: "hidden",
+              width: "100%",
+              height: "100%",
+              background: photo.avg_color || "none",
+            }}
+          >
+            <img
+              style={{
+                width: "100%",
+                // blur image while loading
+                filter: isPreloading ? "blur(16px)" : "none",
+                overflow: "hidden",
+              }}
+              src={state.src}
+              alt={photo.photographer}
+            />
+          </div>
+        </Link>
+      )}
+    </div>
+  );
+});
 
 function PhotosHomePage() {
-  const { onSearch, query, results } = useSearchPhotos();
+  const { onSearch, results, loadMore } = useSearchPhotos();
   const handleSearch = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       onSearch(event.target.value);
@@ -13,6 +109,17 @@ function PhotosHomePage() {
   const photos = useMemo(() => {
     return results?.data?.flatMap((page) => page.photos) ?? [];
   }, [results.data]);
+  const loaderObserver = useInView({
+    threshold: 0,
+  });
+  useEffect(
+    function loadMorePhotos() {
+      if (loaderObserver.inView) {
+        loadMore();
+      }
+    },
+    [loaderObserver.inView, loadMore]
+  );
   return (
     <main
       style={{
@@ -21,21 +128,7 @@ function PhotosHomePage() {
     >
       <div
         style={{
-          height: 80,
-        }}
-      >
-        <input
-          type="search"
-          name="search"
-          value={query}
-          placeholder="Search photos"
-          aria-label="Search"
-          onChange={handleSearch}
-        />
-      </div>
-      <div
-        style={{
-          height: "calc(100vh - 80px)",
+          marginTop: 72,
         }}
       >
         <MasonryGrid
@@ -43,38 +136,31 @@ function PhotosHomePage() {
           keyAccessor={"id"}
           heightAccessor="height"
           widthAccessor="width"
-          columns={5}
+          columns={4}
         >
           {(photo) => {
-            return (
-              <div
-                style={{
-                  padding: "6px",
-                }}
-              >
-                <span
-                  style={{
-                    position: "absolute",
-                    color: "white",
-                    backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    padding: 4,
-                    borderRadius: 4,
-                    margin: 4,
-                  }}
-                >
-                  {photo.photographer}
-                </span>
-                <img
-                  style={{
-                    borderRadius: 4,
-                  }}
-                  src={photo.src.medium}
-                  alt={photo.photographer}
-                />
-              </div>
-            );
+            return <LazyPhotoRenderer photo={photo} />;
           }}
         </MasonryGrid>
+        <div ref={loaderObserver.ref}>Loading..</div>
+      </div>
+      <div
+        style={{
+          position: "fixed",
+          height: 72,
+          left: 0,
+          right: 0,
+          top: 0,
+          padding: "8px 16px",
+        }}
+      >
+        <input
+          type="search"
+          name="search"
+          placeholder="Search photos"
+          aria-label="Search"
+          onChange={handleSearch}
+        />
       </div>
     </main>
   );

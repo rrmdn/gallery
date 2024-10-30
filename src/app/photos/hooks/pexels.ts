@@ -20,17 +20,18 @@ export const useSearchPhotos = () => {
       if (previousPageData && !previousPageData.photos.length) {
         return null;
       }
-      return [state.query, pageIndex + 1];
+      return [state.query, pageIndex + 1].join(",");
     },
     [state.query]
   );
   const results = useSWRInfinite(
     getPage,
-    async (query: string, page: number) => {
+    async (arg: string) => {
+      const [query, page] = arg.split(",");
       return client.photos
         .search({
-          query,
-          page,
+          query: query || "nature",
+          page: parseInt(page),
           per_page: 30,
         })
         .then((res) => {
@@ -38,13 +39,33 @@ export const useSearchPhotos = () => {
             throw new Error(res.error);
           }
           return res;
+        })
+        .catch(async (error) => {
+          // must be 429, retry at least 5 seconds later
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          throw error;
         });
+    },
+    {
+      revalidateFirstPage: false,
     }
   );
+  const isLoadingMore =
+    results.isLoading ||
+    (results.size > 0 &&
+      results.data &&
+      typeof results.data[results.size - 1] === "undefined");
+  const isRefreshing =
+    results.isValidating &&
+    results.data &&
+    results.data.length === results.size;
+
   const loadMore = useCallback(() => {
-    if (results.isLoading) return;
+    if (isLoadingMore || isRefreshing) {
+      return;
+    }
     results.setSize(results.size + 1);
-  }, [results]);
+  }, [results.size, isLoadingMore, isRefreshing]);
   return {
     query: state.query,
     onSearch,
