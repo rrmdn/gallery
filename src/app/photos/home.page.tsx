@@ -1,100 +1,52 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchPhotos } from "./hooks/pexels";
 import MasonryGrid from "../../shared/components/MasonryGrid";
-import { useInView } from "react-intersection-observer";
+import { useInView, InView } from "react-intersection-observer";
 import { Photos } from "pexels";
 import { Link } from "react-router-dom";
 import { css } from "@emotion/react";
 
 type Photo = Photos["photos"][number];
 
-const LazyPhotoRenderer = memo(({ photo }: { photo: Photo }) => {
-  const placeholderImg = useMemo(() => {
-    return (
-      photo.src.original +
-      `?auto=compress\u0026cs=tinysrgb\u0026dpr=2\u0026w=${5}`
-    );
-  }, [photo.src.original]);
-  const [state, setState] = useState({
-    src: "",
-  });
-  const isPreloading = !state.src || state.src === placeholderImg;
-  const photoVisibility = useInView({
-    threshold: 0,
-    onChange: (inView) => {
-      if (inView) {
-        // load the image gradually
-        const placeholder = new Image();
-        placeholder.src = placeholderImg;
-        setState((state) => ({
-          ...state,
-          src: placeholderImg,
-        }));
-        placeholder.addEventListener("load", () => {
-          const img = new Image();
-          img.src = photo.src.medium;
-          img.addEventListener("load", () => {
-            setState((state) => ({
-              ...state,
-              src: photo.src.medium,
-            }));
-          });
-        });
-      }
-    },
-  });
+const PhotoRenderer = memo(({ photo }: { photo: Photo }) => {
   return (
-    <div
-      css={css`
-        padding: 8px;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        position: relative;
-      `}
-      ref={photoVisibility.ref}
-    >
-      {photoVisibility.inView && (
-        <Link to={`/photos/${photo.id}`}>
-          <span
-            css={css`
-              position: absolute;
-              color: white;
-              background-color: rgba(0, 0, 0, 0.2);
-              padding: 2px 6px;
-              border-radius: 6px;
-              margin: 4px;
-              max-width: 90%;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              backdrop-filter: blur(6px);
-            `}
-          >
-            {photo.photographer}
-          </span>
-          <div
-            css={css`
-              border-radius: 8px;
-              overflow: hidden;
-              width: 100%;
-              height: 100%;
-              background: ${photo.avg_color || "none"};
-            `}
-          >
-            <img
-              css={css`
-                width: 100%;
-                filter: ${isPreloading ? "blur(16px)" : "none"};
-                overflow: hidden;
-              `}
-              src={state.src}
-              alt={photo.photographer}
-            />
-          </div>
-        </Link>
-      )}
-    </div>
+    <Link to={`/photos/${photo.id}`}>
+      <span
+        css={css`
+          position: absolute;
+          color: white;
+          background-color: rgba(0, 0, 0, 0.2);
+          padding: 2px 6px;
+          border-radius: 6px;
+          margin: 4px;
+          max-width: 90%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          backdrop-filter: blur(6px);
+        `}
+      >
+        {photo.photographer}
+      </span>
+      <div
+        css={css`
+          border-radius: 8px;
+          overflow: hidden;
+          width: 100%;
+          height: 100%;
+          background: ${photo.avg_color || "none"};
+        `}
+      >
+        <img
+          css={css`
+            width: 100%;
+            overflow: hidden;
+          `}
+          src={photo.src.medium}
+          alt={photo.photographer}
+        />
+      </div>
+    </Link>
   );
 });
 
@@ -105,11 +57,12 @@ function PhotosHomePage() {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setQuery(event.target.value);
     },
-    [onSearch]
+    [setQuery]
   );
   useEffect(
     function searchPhotos() {
       const timeout = setTimeout(() => {
+        window.scrollTo(0, 0);
         onSearch(query);
       }, 500);
       return () => {
@@ -151,7 +104,26 @@ function PhotosHomePage() {
           columns={4}
         >
           {(photo) => {
-            return <LazyPhotoRenderer photo={photo} />;
+            return (
+              <InView threshold={0}>
+                {({ ref, inView }) => {
+                  return (
+                    <div
+                      ref={ref}
+                      css={css`
+                        padding: 8px;
+                        width: 100%;
+                        height: 100%;
+                        overflow: hidden;
+                        position: relative;
+                      `}
+                    >
+                      {inView ? <PhotoRenderer photo={photo} /> : null}
+                    </div>
+                  );
+                }}
+              </InView>
+            );
           }}
         </MasonryGrid>
         <div ref={loaderObserver.ref}>

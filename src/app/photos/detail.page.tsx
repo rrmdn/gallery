@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { usePhoto } from "./hooks/pexels";
 import { useCallback, useMemo } from "react";
 import { css } from "@emotion/react";
+import { useImageLoader } from "./hooks/useImageLoader";
+import fitWindow from "./utils/fitWindow";
 
 function PhotoDetailPage() {
   const { id } = useParams();
@@ -11,20 +13,37 @@ function PhotoDetailPage() {
   const goBack = useCallback(() => {
     nav(-1);
   }, [nav]);
-  const imageWidthToFitWindow = useMemo(() => {
+  const fittedWindow = useMemo(() => {
     if (!photo.data) {
       return null;
     }
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const imageWidth = photo.data.width;
-    const imageHeight = photo.data.height;
-    const aspectRatio = imageWidth / imageHeight;
-    const widthToFitWindow = windowHeight * aspectRatio;
-    return widthToFitWindow > windowWidth ? windowWidth : widthToFitWindow;
+
+    return fitWindow(
+      window.innerWidth,
+      window.innerHeight,
+      photo.data.width,
+      photo.data.height
+    );
   }, [photo.data]);
+  const theImage = useImageLoader(
+    photo.data?.src.original +
+      `?auto=compress\u0026cs=tinysrgb\u0026dpr=2\u0026w=${10}` || "",
+    photo.data?.src.original || ""
+  );
   if (!photo.data) {
-    return null;
+    return (
+      <div
+        css={css`
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          width: 100vw;
+        `}
+      >
+        <h1>Loading...</h1>
+      </div>
+    );
   }
   return (
     <div
@@ -32,7 +51,7 @@ function PhotoDetailPage() {
         background: ${photo.data.avg_color || "none"};
         width: 100vw;
         height: 100vh;
-        overflowX: hidden;
+        overflowx: hidden;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -42,7 +61,8 @@ function PhotoDetailPage() {
         css={css`
           padding: 16px;
           position: relative;
-          width: ${imageWidthToFitWindow || "100%"};
+          width: ${fittedWindow ? fittedWindow.width + "px" : "100%"};
+          height: ${fittedWindow ? fittedWindow.height + "px" : "100%"};
         `}
       >
         <button
@@ -81,12 +101,20 @@ function PhotoDetailPage() {
             <strong>{photo.data.photographer}</strong>: {photo.data.alt}
           </p>
         </div>
-        <div>
+        <div
+          css={css`
+            overflow: hidden;
+            border-radius: 16px;
+          `}
+        >
           <img
             css={css`
-              border-radius: 16px;
+              filter: ${!theImage.loaded ? "blur(16px)" : "none"};
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
             `}
-            src={photo.data.src.original}
+            src={theImage.image}
             alt={photo.data.photographer}
           />
         </div>

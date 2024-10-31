@@ -1,5 +1,6 @@
 import { css } from "@emotion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import selectMaxColumn from "./selectMaxColumn";
 
 type NumberKeyOf<T> = {
   [K in keyof T]: T[K] extends number ? K : never;
@@ -37,14 +38,6 @@ function MasonryGridItem<TItem extends object>({
   );
 }
 
-const columnsByMinWidth: Record<number, number> = {
-  0: 1,
-  320: 2,
-  480: 3,
-  768: 4,
-  1024: 5,
-};
-
 /**
  * Calculate the relative height of each item by calculating the ratio of the column width to the height of the item
  * @param props the props of the masonry grid
@@ -70,17 +63,9 @@ export default function MasonryGrid<TItem extends object = object>(
     function handleResize() {
       if (!container) return;
       const containerWidth = container.getBoundingClientRect().width;
-      let currentColumn = props.columns;
-      for (const minWidth in columnsByMinWidth) {
-        const column = columnsByMinWidth[minWidth];
-        if (containerWidth > parseInt(minWidth)) {
-          currentColumn = column;
-        }
-      }
-      currentColumn = Math.min(currentColumn, props.columns);
-        
+      const currentColumn = selectMaxColumn(containerWidth, containerWidth);
       const columnWidth = Math.floor(
-        container.getBoundingClientRect().width / currentColumn - currentColumn
+        containerWidth / currentColumn - currentColumn
       );
       setState((state) => ({
         ...state,
