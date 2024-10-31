@@ -3,12 +3,7 @@ import { useSearchPhotos } from "./hooks/pexels";
 import MasonryGrid from "../../shared/components/MasonryGrid";
 import { useInView, InView } from "react-intersection-observer";
 import { Photos } from "pexels";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { css } from "@emotion/react";
 
 type Photo = Photos["photos"][number];
