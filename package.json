@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "husky install",
-    "postbuild": "find dist -type f -name '*.js' -exec sed -i 's/require(\"isomorphic-fetch\");//g' {} +    ",
+    "postbuild": "cp dist/index.html dist/404.html &&find dist -type f -name '*.js' -exec sed -i 's/require(\"isomorphic-fetch\");//g' {} +    ",
     "test": "jest"
   },
   "dependencies": {
