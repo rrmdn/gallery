@@ -1,3 +1,4 @@
+import { css } from "@emotion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type NumberKeyOf<T> = {
@@ -26,10 +27,10 @@ function MasonryGridItem<TItem extends object>({
 }) {
   return (
     <div
+      css={css`
+        grid-row-end: span ${Math.ceil(height / autoRows)};
+      `}
       className="masonry-grid-item"
-      style={{
-        gridRowEnd: `span ${Math.ceil(height / autoRows)}`,
-      }}
     >
       {children(item)}
     </div>
@@ -104,13 +105,13 @@ export default function MasonryGrid<TItem extends object = object>(
   );
   return (
     <div
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "grid",
-        gridTemplateColumns: `repeat(auto-fill, minmax(${state.columnWidth}px, 1fr))`,
-        gridAutoRows: `${state.autoRows}px`,
-      }}
+      css={css`
+        height: 100%;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(${state.columnWidth}px, 1fr));
+        grid-auto-rows: ${state.autoRows}px;
+      `}
       ref={containerRef}
       className="masonry-grid"
     >

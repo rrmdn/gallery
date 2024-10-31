@@ -4,6 +4,7 @@ import MasonryGrid from "../../shared/components/MasonryGrid";
 import { useInView } from "react-intersection-observer";
 import { Photos } from "pexels";
 import { Link } from "react-router-dom";
+import { css } from "@emotion/react";
 
 type Photo = Photos["photos"][number];
 
@@ -44,50 +45,49 @@ const LazyPhotoRenderer = memo(({ photo }: { photo: Photo }) => {
   });
   return (
     <div
-      style={{
-        padding: "8px",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        position: "relative",
-      }}
+      css={css`
+        padding: 8px;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      `}
       ref={photoVisibility.ref}
     >
       {photoVisibility.inView && (
         <Link to={`/photos/${photo.id}`}>
           <span
-            style={{
-              position: "absolute",
-              color: "white",
-              backgroundColor: "rgba(0, 0, 0, 0.2)",
-              padding: "2px 6px",
-              borderRadius: 6,
-              margin: 4,
-              maxWidth: "90%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              backdropFilter: "blur(6px)",
-            }}
+            css={css`
+              position: absolute;
+              color: white;
+              background-color: rgba(0, 0, 0, 0.2);
+              padding: 2px 6px;
+              border-radius: 6px;
+              margin: 4px;
+              max-width: 90%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              backdrop-filter: blur(6px);
+            `}
           >
             {photo.photographer}
           </span>
           <div
-            style={{
-              borderRadius: 8,
-              overflow: "hidden",
-              width: "100%",
-              height: "100%",
-              background: photo.avg_color || "none",
-            }}
+            css={css`
+              border-radius: 8px;
+              overflow: hidden;
+              width: 100%;
+              height: 100%;
+              background: ${photo.avg_color || "none"};
+            `}
           >
             <img
-              style={{
-                width: "100%",
-                // blur image while loading
-                filter: isPreloading ? "blur(16px)" : "none",
-                overflow: "hidden",
-              }}
+              css={css`
+                width: 100%;
+                filter: ${isPreloading ? "blur(16px)" : "none"};
+                overflow: hidden;
+              `}
               src={state.src}
               alt={photo.photographer}
             />
@@ -134,14 +134,14 @@ function PhotosHomePage() {
   );
   return (
     <main
-      style={{
-        height: "100vh",
-      }}
+      css={css`
+        height: 100vh;
+      `}
     >
       <div
-        style={{
-          marginTop: 72,
-        }}
+        css={css`
+          margin-top: 72px;
+        `}
       >
         <MasonryGrid
           items={photos}
@@ -156,13 +156,13 @@ function PhotosHomePage() {
         </MasonryGrid>
         <div ref={loaderObserver.ref}>
           <h1
-            style={{
-              display: "block",
-              width: "100%",
-              height: 200,
-              textAlign: "center",
-              padding: "8px",
-            }}
+            css={css`
+              display: block;
+              width: 100%;
+              height: 200px;
+              text-align: center;
+              padding: 8px;
+            `}
           >
             {results?.isLoading
               ? "Loading..."
@@ -173,14 +173,14 @@ function PhotosHomePage() {
         </div>
       </div>
       <div
-        style={{
-          position: "fixed",
-          height: 72,
-          left: 0,
-          right: 0,
-          top: 0,
-          padding: "8px 16px",
-        }}
+        css={css`
+          position: fixed;
+          height: 72px;
+          left: 0;
+          right: 0;
+          top: 0;
+          padding: 8px 16px;
+        `}
       >
         <input
           type="search"
