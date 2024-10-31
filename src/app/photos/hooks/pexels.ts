@@ -3,12 +3,14 @@ import { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 
-export const useSearchPhotos = () => {
+export const useSearchPhotos = (
+  initialQuery: string = ""
+) => {
   const client = useMemo(() => {
     return createClient(import.meta.env.VITE_PEXELS_API_KEY);
   }, []);
   const [state, setState] = useState({
-    query: "",
+    query: initialQuery,
   });
   const onSearch = useCallback((query: string) => {
     setState((state) => ({

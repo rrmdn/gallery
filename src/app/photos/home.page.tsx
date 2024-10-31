@@ -3,7 +3,12 @@ import { useSearchPhotos } from "./hooks/pexels";
 import MasonryGrid from "../../shared/components/MasonryGrid";
 import { useInView, InView } from "react-intersection-observer";
 import { Photos } from "pexels";
-import { Link } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { css } from "@emotion/react";
 
 type Photo = Photos["photos"][number];
@@ -51,20 +56,27 @@ const PhotoRenderer = memo(({ photo }: { photo: Photo }) => {
 });
 
 function PhotosHomePage() {
-  const { onSearch, results, loadMore } = useSearchPhotos();
-  const [query, setQuery] = useState("");
+  const [params, setParams] = useSearchParams();
+  const [query, setQuery] = useState(params.get("q") ?? "");
+  const { onSearch, results, loadMore } = useSearchPhotos(query);
   const handleSearch = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setQuery(event.target.value);
+      setParams({ q: event.target.value });
     },
-    [setQuery]
+    [setQuery, setParams]
   );
+  const handleSmoothScrollToTop = useCallback(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
   useEffect(
     function searchPhotos() {
       const timeout = setTimeout(() => {
-        window.scrollTo(0, 0);
         onSearch(query);
-      }, 500);
+      }, 200);
       return () => {
         clearTimeout(timeout);
       };
@@ -164,7 +176,9 @@ function PhotosHomePage() {
           name="search"
           placeholder="Search photos"
           aria-label="Search"
+          value={query}
           onChange={handleSearch}
+          onFocus={handleSmoothScrollToTop}
         />
       </div>
     </main>
