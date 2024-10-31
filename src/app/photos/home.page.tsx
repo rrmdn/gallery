@@ -79,9 +79,14 @@ function PhotosHomePage() {
   });
   useEffect(
     function loadMorePhotos() {
-      if (loaderObserver.inView) {
-        loadMore();
-      }
+      const timeout = setTimeout(() => {
+        if (loaderObserver.inView) {
+          loadMore();
+        }
+      }, 60);
+      return () => {
+        clearTimeout(timeout);
+      };
     },
     [loaderObserver.inView, loadMore]
   );

@@ -1,5 +1,5 @@
 import { css } from "@emotion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import selectMaxColumn from "./selectMaxColumn";
 
 type NumberKeyOf<T> = {
@@ -18,18 +18,22 @@ export type MasonryGridProps<TItem = object> = {
 function MasonryGridItem<TItem extends object>({
   item,
   children,
-  height,
+  calcHeight,
   autoRows,
 }: {
   item: TItem;
   children: (item: TItem) => React.ReactNode;
-  height: number;
+  calcHeight: (item: TItem) => number;
   autoRows: number;
 }) {
+  const span = useMemo(() => {
+    const height = calcHeight(item);
+    return Math.ceil(height / autoRows)
+  }, [item, autoRows, calcHeight]);
   return (
     <div
       css={css`
-        grid-row-end: span ${Math.ceil(height / autoRows)};
+        grid-row-end: span ${span};
       `}
       className="masonry-grid-item"
     >
@@ -52,12 +56,7 @@ export default function MasonryGrid<TItem extends object = object>(
     autoRows: 4,
     currentColumns: props.columns,
   });
-  const didMountRef = useRef(false);
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
-    }
     const container = containerRef.current;
     if (!container) return;
     function handleResize() {
@@ -70,7 +69,7 @@ export default function MasonryGrid<TItem extends object = object>(
       setState((state) => ({
         ...state,
         columnWidth,
-        currentColumn
+        currentColumn,
       }));
     }
     handleResize();
@@ -84,9 +83,10 @@ export default function MasonryGrid<TItem extends object = object>(
       const height = item[props.heightAccessor] as number;
       const width = item[props.widthAccessor] as number;
       const aspectRatio = width / height;
-      return Math.floor(state.columnWidth / aspectRatio);
+      const calculated = Math.floor(state.columnWidth / aspectRatio);
+      return calculated;
     },
-    [props.heightAccessor, state.columnWidth]
+    [props.heightAccessor, state.columnWidth, props.widthAccessor]
   );
   return (
     <div
@@ -94,7 +94,10 @@ export default function MasonryGrid<TItem extends object = object>(
         height: 100%;
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(${state.columnWidth}px, 1fr));
+        grid-template-columns: repeat(
+          auto-fill,
+          minmax(${state.columnWidth}px, 1fr)
+        );
         grid-auto-rows: ${state.autoRows}px;
       `}
       ref={containerRef}
@@ -105,7 +108,7 @@ export default function MasonryGrid<TItem extends object = object>(
           key={String(item[props.keyAccessor])}
           item={item}
           children={props.children}
-          height={calcItemHeight(item)}
+          calcHeight={calcItemHeight}
           autoRows={state.autoRows}
         />
       ))}
